@@ -84,8 +84,8 @@ These 2 test services are configured by default to invoke the echo API in a Kube
 ```
 cd services
 kubectl apply -f echo.yaml
-kubectl apply -f echo.yaml
-kubectl apply -f echo.yaml
+kubectl apply -f sync.yaml
+kubectl apply -f async.yaml
 
 //These yamls have the K8s definitions for the echo, sync and async api services. Each service is run as a NodePort and can be accessed from outside the K8s cluster
 minikube ip //This prints the IP of the minikube node
