@@ -105,3 +105,7 @@ This would show us the CPU utilizations when the above mentioned 3 APIs are invo
 ab -c 500 -n 50000 -k http://minikubeip:nodeport/spring/syncapi/20
 ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/syncapi/20
 ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/asyncapi/20
+
+
+## Trying autoscaling
+TODO
