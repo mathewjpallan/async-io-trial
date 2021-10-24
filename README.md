@@ -38,36 +38,34 @@ helm repo update
 helm install --namespace monitoring monitoring-stack prometheus-community/kube-prometheus-stack --version=19.2.2 -f conf.yaml
 The stack installs grafana but it is setup as a cluster IP and we have to edit the service to make it a NodePort for accessing it outside the K8s cluster. Please note that all the monitoring components are deployed to a different namespace (monitoring) and so the namespace has to be provided while issuing kubectl commands
 kubectl get services -n monitoring to see the services in the monitoring namespace. Copy the name of the grafana service
-kubectl edit svc grafana-service-name -n monitoring (should be monitoring-stack-grafana if you have followed above steps) 
+kubectl -n monitoring edit svc grafana-service-name  (should be monitoring-stack-grafana if you have followed above steps) 
 Edit the service type from ClusterIP to NodePort and save the config  //this should be in the 3rd last line of the service config
 kubectl get services -n monitoring //This would indicate the port (in the 32000 range) that is assigned for the Grafana NodePort service
 minikube ip //to get the IP address exposed by minikube
 Navigate to http://minikubeip:nodeport on the browser to see the grafana dashboards. The default credentials are admin/prom-operator
-Use the Import Dashboard option on grafana to import the CPUmetrics.json dashboard to grafana. The custom dashboard is used to view CPU metrics at a more granular rate of change. 
+Use the Import Dashboard option on grafana to import the monitoring/CPUmetrics.json dashboard to grafana. The custom dashboard is used to view CPU metrics at a more granular rate of change. 
 ```
 
 ### 4. Source code
 
 This repo includes an echo api that can be built by the following steps. The echo api exposes /echo/:msg/after/:time and API would respond back with the msg after the time interval. For eg. if you want the service to return hello after 50 milliseconds - curl /echo/hello/after/50
 
-Build the echo API
+**Build the echo API**
 ```
  cd src/EchoAPI
  docker build --tag echoapi:0.0.1 .
  minikube image load echoapi:0.0.1  //To ensure that the locally created image is available in the minikube environment
 ```
 
-There are 2 test services (SyncAPI & AsyncAPI) that invoke the echo API and return the response from echo to the caller. The SyncAPI is a spring boot app and the AsyncAPI is a Playframework app.
+The repo also includes 2 test services (SyncAPI & AsyncAPI) that invoke the echo API and return the response from echo to the caller. The SyncAPI is a spring boot app and the AsyncAPI is a Playframework app.
 
-SyncAPI (Spring boot)
-exposes /spring/syncapi/:delaytime //The delay time is sent to echo API
+SyncAPI (Spring boot) exposes /spring/syncapi/:delaytime //The delay time is sent to echo API
 
-AsyncAPI (Play framework)
-exposes /play/asyncapi:delaytime and /play/syncapi:delaytime //The delay time is sent to the echo API
+AsyncAPI (Play framework) exposes /play/asyncapi:delaytime and /play/syncapi:delaytime //The delay time is sent to the echo API
 
-The echo API base path in the code is set to invoke the echo API in a Kubernetes env after these have been deployed on K8s (steps below).
+These 2 test services are configured by default to invoke the echo API in a Kubernetes env after these have been deployed on K8s (steps below).
 
-Build the APIs
+**Build the Sync and Async APIs**
 ```
  cd src/SyncAPI
  mvn clean package
