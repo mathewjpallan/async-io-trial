@@ -1,5 +1,5 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
-GET /testasync                   controllers.TestController.testAsync()
-GET /testsync                   controllers.TestController.testSync()
+GET /play/asyncapi/:delaytime                   controllers.TestController.testAsync(delaytime: String)
+GET /play/syncapi/:delaytime                   controllers.TestController.testSync(delaytime: String)

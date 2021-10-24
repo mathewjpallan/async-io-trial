@@ -1,5 +1,6 @@
 package controllers;
 
+import com.typesafe.config.Config;
 import play.libs.ws.WSClient;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -12,19 +13,24 @@ public class TestController extends Controller {
     @Inject
     private WSClient wsClient;
 
+    @Inject
+    private Config config;
+
     public TestController() {
     }
 
-    public CompletionStage<Result> testAsync() {
-        CompletionStage<Result> data = wsClient.url("http://172.21.0.7:9595/echoafter/500").get().thenApply(r -> ok(r.getBody()));
+    public CompletionStage<Result> testAsync(String delaytime) {
+        CompletionStage<Result> data = wsClient.url(
+                config.getString("echo.endpoint.baseapipath") + "/echo/hello/after/" + delaytime).get()
+                .thenApply(r -> ok(r.getBody()));
         return data;
     }
 
-    public Result testSync() throws Exception {
-        CompletionStage<String> data = wsClient.url("http://172.21.0.7:9595/echoafter/500").get().thenApply(r -> r.getBody());
-        System.out.println("invoked : " + System.currentTimeMillis());
+    public Result testSync(String delaytime) throws Exception {
+        CompletionStage<String> data = wsClient.url(
+                config.getString("echo.endpoint.baseapipath") + "/echo/hello/after/" + delaytime).get()
+                .thenApply(r -> r.getBody());
         String result = data.toCompletableFuture().get();
-        System.out.println("result is ready : " + System.currentTimeMillis());
         return ok(result);
     }
 }

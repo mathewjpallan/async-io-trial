@@ -1,6 +1,8 @@
 # Async IO and its role in autoscaling
 
-## Trying out async vs sync IO on a local Kubernetes(K8s) setup
+## Trying out async vs sync IO on a local Kubernetes(K8s) setup. 
+
+### Clone this repo ahead of the below steps
 
 ### 1. Install docker
 
@@ -44,35 +46,62 @@ Navigate to http://minikubeip:nodeport on the browser to see the grafana dashboa
 Use the Import Dashboard option on grafana to import the CPUmetrics.json dashboard to grafana. The custom dashboard is used to view CPU metrics at a more granular rate of change. 
 ```
 
-### 4. Create a docker image that we can use within the K8s cluster
+### 4. Source code
 
-This repo includes an echo service that can be built by the following steps
+This repo includes an echo api that can be built by the following steps. The echo api exposes /echo/:msg/after/:time and API would respond back with the msg after the time interval. For eg. if you want the service to return hello after 50 milliseconds - curl /echo/hello/after/50
 
+Build the echo API
 ```
- cd echoservice
- docker build --tag echoservice:0.0.1 .
- minikube image load echoservice:0.0.1
-```
-
- We have built the docker image on our local docker, but want to access the local images in minikube which uses a separate docker daemon. The cache command is necessary to make the local images available in minikube. The cache reload needs to be done when the image changes
-
- Here are the steps if you want to try the docker image locally outside k8s for testing
-
-```
- docker run --rm --name echoservice -d -p 9595:9595 echoservice:0.0.1
- curl localhost:9595/echo/somestring should return somestring in the response
- docker container stop echoservice //to stop the container
+ cd src/EchoAPI
+ docker build --tag echoapi:0.0.1 .
+ minikube image load echoapi:0.0.1  //To ensure that the locally created image is available in the minikube environment
 ```
 
-### 4. Run the echo service in kubernetes with a nginx reverse proxy in front.
+There are 2 test services (SyncAPI & AsyncAPI) that invoke the echo API and return the response from echo to the caller. The SyncAPI is a spring boot app and the AsyncAPI is a Playframework app.
+
+SyncAPI (Spring boot)
+exposes /spring/syncapi/:delaytime //The delay time is sent to echo API
+
+AsyncAPI (Play framework)
+exposes /play/asyncapi:delaytime and /play/syncapi:delaytime //The delay time is sent to the echo API
+
+The echo API base path in the code is set to invoke the echo API in a Kubernetes env after these have been deployed on K8s (steps below).
+
+Build the APIs
+```
+ cd src/SyncAPI
+ mvn clean package
+ docker build --tag syncapi:0.0.1 .
+ minikube image load syncapi:0.0.1  //To ensure that the locally created image is available in the minikube environment
+
+ cd ../AsyncAPI
+ mvn clean package play2:dist
+ docker build --tag asyncapi:0.0.1 .
+ minikube image load asyncapi:0.0.1  //To ensure that the locally created image is available in the minikube environment
+
+```
+
+### 5. Run the APIs in kubernetes
 
 ```
 cd services
-kubectl apply -f service.yaml
-kubectl apply -f proxy.yaml
-//These yamls have the K8s definitions for the echo service and nginx proxy. The echo service is run a cluster IP service which implies that it can only be accessed within the K8s cluster. The reverse proxy is run as a NodePort service and it gets a port on the minikube through which it can be accessed outside the K8s cluster.
+kubectl apply -f echo.yaml
+kubectl apply -f echo.yaml
+kubectl apply -f echo.yaml
+
+//These yamls have the K8s definitions for the echo, sync and async api services. Each service is run as a NodePort and can be accessed from outside the K8s cluster
 minikube ip //This prints the IP of the minikube node
-kubectl get services //This would indicate the port (in the 32000 range) that is assigned for the Nginx NodePort service
-curl minikubeip:nodeport/api/echo/teststring //This should return teststring in the response if working as expected
+kubectl get services //This would indicate the port (in the 32000 range) that is assigned for the 3 services
+
+curl minikubeip:nodeport/spring/syncapi/20 //This should return hello in the response after 20 milliseconds
+curl minikubeip:nodeport/play/syncapi/20 //This should return hello in the response after 20 milliseconds
+curl minikubeip:nodeport/play/asyncapi/20 //This should return hello in the response after 20 milliseconds
 ```
 
+### 6. Running a load test on these APIs
+
+This would show us the CPU utilizations when the above mentioned 3 APIs are invoked with the same load
+
+ab -c 500 -n 50000 -k http://minikubeip:nodeport/spring/syncapi/20
+ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/syncapi/20
+ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/asyncapi/20

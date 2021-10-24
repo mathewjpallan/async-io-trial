@@ -6,6 +6,6 @@ WORKDIR $APP_HOME
 
 COPY target/test-api-*.jar api.jar
 
-EXPOSE 8081
+EXPOSE 8000
 
 ENTRYPOINT /usr/bin/java ${JAVA_OPTS} -jar api.jar
