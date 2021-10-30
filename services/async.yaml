@@ -23,7 +23,7 @@ spec:
             memory: "512Mi"
             cpu: "1000m"
         ports:
-        - containerPort: 8000
+        - containerPort: 9000
 ---
 apiVersion: v1
 kind: Service

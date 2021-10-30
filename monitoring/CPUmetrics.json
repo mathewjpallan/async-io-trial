@@ -1,19 +1,4 @@
 {
-  "__inputs": [],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "8.2.1"
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -37,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 26,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -91,7 +76,32 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "{pod=\"syncapi-deployment-56b48b59-hrjd5\"}"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 20,
@@ -115,7 +125,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=\"default\", container=~\"echo|sync|async\", id!~\".*docker.*\"}[2m])) by (container)",
+          "expr": "sum(irate(container_cpu_usage_seconds_total{namespace=\"default\", container=~\"echo|sync|async\", id!~\".*docker.*\"}[2m])) by (pod)",
           "format": "time_series",
           "instant": false,
           "interval": "",

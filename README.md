@@ -98,12 +98,25 @@ curl minikubeip:nodeport/play/asyncapi/20 //This should return hello in the resp
 
 ### 6. Running a load test on these APIs
 
-This would show us the CPU utilizations when the above mentioned 3 APIs are invoked with the same load
+We are using Apache workbench (ab) for load testing these APIs with concurrency. The below commands simulate the behavior of the sync and async APIs when the echo service responds back after 1 sec. We can observe that the sync APIs have a bad response time and also do not use CPU as most of the threads are just waiting for the echo service response. However the async APIs dont block threads and hence they are able to handle other requests in parallel. 
 
-ab -c 500 -n 50000 -k http://minikubeip:nodeport/spring/syncapi/20
-ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/syncapi/20
-ab -c 500 -n 50000 -k http://minikubeip:nodeport/play/asyncapi/20
+ab -c 500 -n 100000 -k http://minikubeip:nodeport/spring/syncapi/1000  
+ab -c 500 -n 100000 -k http://minikubeip:nodeport/play/asyncapi/1000  
 
+And it is not that just writing an API is an async framework solves it, here is an example of a badly written API in play which does not scale either.
+ab -c 500 -n 100000 -k http://minikubeip:nodeport/play/syncapi/1000  
 
-## Trying autoscaling
-TODO
+You can try changing the number of threads and also the delay time and see that the advantages of async IO are not visible at a lower concurrency or when I/O time (echo service response time in this trial) is lower.
+
+## Impact on autoscaling
+
+Execute the below commands to setup HPA (Horizontal Pod Autoscaler) for the sync and async service. The below definitions setup HPA for the sync and async APIs when CPU usage hits 80%
+
+```
+cd services
+kubectl apply -f echo.yaml
+```
+
+Once you setup HPA, you can repeat the above load tests and you can see that there are new pods coming up when invoking the async APIs as the HPA rules are set to trigger pod creation when CPU usage exceeds 80%. As the sync API does not use too much CPU (in our test conditions - high concurrency and high I/O time), HPA does not kick in and hence the system does not auto scale.
+
+If you reduce concurrency or I/O time (echo service response time in this trial) you can see that the sync API also starts using more CPU and HPA kicks in creating more pods to scale out.
