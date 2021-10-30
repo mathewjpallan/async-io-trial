@@ -59,11 +59,12 @@ This repo includes an echo api that can be built by the following steps. The ech
 
 The repo also includes 2 test services (SyncAPI & AsyncAPI) that invoke the echo API and return the response from echo to the caller. The SyncAPI is a spring boot app and the AsyncAPI is a Playframework app.
 
-SyncAPI (Spring boot) exposes /spring/syncapi/:delaytime //The delay time is sent to echo API
+SyncAPI (Spring boot) exposes /spring/syncapi/:delaytime //The delay time is sent to echo API  
+***Spring webflux allows creating Async APIs**
 
 AsyncAPI (Play framework) exposes /play/asyncapi:delaytime and /play/syncapi:delaytime //The delay time is sent to the echo API
 
-These 2 test services are configured by default to invoke the echo API in a Kubernetes env after these have been deployed on K8s (steps below).
+These 2 test APIs are configured by default to invoke the echo API in a Kubernetes env after these have been deployed on K8s (steps below).
 
 **Build the Sync and Async APIs**
 ```
@@ -103,7 +104,7 @@ We are using Apache workbench (ab) for load testing these APIs with concurrency.
 ab -c 500 -n 100000 -k http://minikubeip:nodeport/spring/syncapi/1000  
 ab -c 500 -n 100000 -k http://minikubeip:nodeport/play/asyncapi/1000  
 
-And it is not that just writing an API is an async framework solves it, here is an example of a badly written API in play which does not scale either.
+And it is not that just writing an API in an async framework magically solves it, here is an example of a badly written API in playframework which blocks the thread and hence does not scale.  
 ab -c 500 -n 100000 -k http://minikubeip:nodeport/play/syncapi/1000  
 
 You can try changing the number of threads and also the delay time and see that the advantages of async IO are not visible at a lower concurrency or when I/O time (echo service response time in this trial) is lower.
