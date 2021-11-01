@@ -115,7 +115,7 @@ Execute the below commands to setup HPA (Horizontal Pod Autoscaler) for the sync
 
 ```
 cd services
-kubectl apply -f echo.yaml
+kubectl apply -f hpa.yaml
 ```
 
 Once you setup HPA, you can repeat the above load tests and you can see that there are new pods coming up when invoking the async APIs as the HPA rules are set to trigger pod creation when CPU usage exceeds 80%. As the sync API does not use too much CPU (in our test conditions - high concurrency and high I/O time), HPA does not kick in and hence the system does not auto scale.
